@@ -9,7 +9,6 @@ export default function TestCallWidget() {
   const [errorMsg, setErrorMsg] = useState('');
   const [speaking, setSpeaking] = useState(false);
   const roomRef = useRef<Room | null>(null);
-  // Holds every <audio> element we create so we can clean them all up on hang-up.
   const audioElemsRef = useRef<HTMLAudioElement[]>([]);
 
   useEffect(() => {
@@ -35,16 +34,14 @@ export default function TestCallWidget() {
         setSpeaking(speakers.some((p) => p.isLocal));
       });
 
-      // livekit-client v2 auto-subscribes but does NOT attach tracks to the DOM.
-      // We must call track.attach() ourselves to get audible playback.
+
       room.on(RoomEvent.TrackSubscribed, (track) => {
         if (track.kind !== Track.Kind.Audio) return;
-        const el = track.attach(); // creates <audio>, sets srcObject
+        const el = track.attach(); 
         el.autoplay = true;
         audioElemsRef.current.push(el);
       });
 
-      // Detach when the remote side stops sending (agent hangs up, etc.)
       room.on(RoomEvent.TrackUnsubscribed, (track) => {
         if (track.kind === Track.Kind.Audio) track.detach();
       });
@@ -62,7 +59,6 @@ export default function TestCallWidget() {
   async function endCall() {
     await roomRef.current?.disconnect();
     roomRef.current = null;
-    // Remove every <audio> element that was injected during the call.
     for (const el of audioElemsRef.current) {
       el.srcObject = null;
       el.remove();
